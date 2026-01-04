@@ -22,7 +22,7 @@ PASS=$(cat /tmp/password.txt)
 # techuser : admin local
 useradd -m -s /bin/bash user || true
 echo "user:${PASS}" | chpasswd
-usermod -aG sudo techuser
+usermod -aG sudo user
 
 # guest : utilisateur standard
 useradd -m -s /bin/bash guest || true

@@ -3,10 +3,14 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
   config.ssh.insert_key = false
   config.vm.boot_timeout = 600
+#  config.vm.hostname = "ldap-compta"
 
-  config.vm.network "private_network", ip: "172.28.128.111", auto_config: true
   # VLAN
-  config.vm.network "private_network", ip: "172.28.3.10", virtualbox__intnet: "compta", auto_config: true
+  config.vm.network "private_network", ip: "172.28.3.10", virtualbox__intnet: "compta", auto_config: false
+ config.vm.provider "virtualbox" do |vb|
+    # MAC fixes pour matcher netplan (adapters 2..9)
+  vb.customize ["modifyvm", :id, "--macaddress2", "080078CC0011"]
+ end
 
   config.vm.provision "file", source: "./files/01-netplan.yaml", destination: "/tmp/01-netplan.yaml"
   config.vm.provision "file", source: "./files/install.txt", destination: "/home/vagrant/install.txt"

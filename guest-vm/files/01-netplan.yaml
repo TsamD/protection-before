@@ -2,10 +2,10 @@ network:
   version: 2
   renderer: networkd
   ethernets:
-    dmz:
+    vlan_dmz:
       match:
         macaddress: "08:00:27:bb:11:10"
-      set-name: dmz
+      set-name: vlan_dmz
       dhcp4: false
       addresses: [ "172.28.200.15/24" ]
       routes:

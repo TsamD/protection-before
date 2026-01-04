@@ -5,7 +5,7 @@ chmod 600 /home/vagrant/ubuntuadmin-pass.txt
 chown -R vagrant:vagrant /home/vagrant/ubuntuadmin-pass.txt
 
 timedatectl set-timezone Europe/Brussels
-hostnamectl set-hostname sso-compta.interface3.be
+hostnamectl set-hostname sso-desk.interface3.be
 
 cat >> /etc/hosts <<'EOF'
 #LDAP
@@ -55,8 +55,8 @@ systemctl restart sssd
 pam-auth-update --enable mkhomedir || true
 
 # Add host principal + keytab for GSSAPI SSH
-printf "%s\n" "$(cat /home/vagrant/ubuntuadmin-pass.txt)" | kadmin -p ubuntu/admin -q "addprinc -randkey host/sso-compta.interface3.be" || true
-printf "%s\n" "$(cat /home/vagrant/ubuntuadmin-pass.txt)" | kadmin -p ubuntu/admin -q "ktadd -k /etc/krb5.keytab host/sso-compta.interface3.be" || true
+printf "%s\n" "$(cat /home/vagrant/ubuntuadmin-pass.txt)" | kadmin -p ubuntu/admin -q "addprinc -randkey host/sso-desk.interface3.be" || true
+printf "%s\n" "$(cat /home/vagrant/ubuntuadmin-pass.txt)" | kadmin -p ubuntu/admin -q "ktadd -k /etc/krb5.keytab host/sso-desk.interface3.be" || true
 
 cat > /etc/ssh/sshd_config.d/50-gssapi.conf <<'EOF'
 GSSAPIAuthentication yes

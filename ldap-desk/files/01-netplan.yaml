@@ -2,14 +2,14 @@ network:
   version: 2
   renderer: networkd
   ethernets:
-    tech:
-      match:
-        macaddress: "08:00:27:bb:00:11"
-      set-name: tech
+     vlan_desk:
+      match: {macaddress: "08:00:88:ac:11:11"}
+      set-name: vlan_desk
       dhcp4: false
-      addresses: [ "172.28.10.10/24" ]
+      addresses: [ "172.28.100.10/24" ]
       routes:
         - to: default
-          via: 172.28.10.254
+          via: 172.28.100.254
       nameservers:
         addresses: [8.8.8.8, 1.1.1.1]
+

@@ -36,25 +36,72 @@ if ! swapon --show | grep -q "/swapfile"; then
   sudo swapon /swapfile
   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
 fi
+############
+# --- Snort install ---
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y snort snort-common snort-common-libraries snort-rules-default
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y snort
+# --- Overlay conf prof SANS supprimer /etc/snort ---
+# (Comme ça on garde unicode.map, threshold.conf, etc. si présents)
+sudo rsync -a /tmp/snort/ /etc/snort/
+sudo chown -R root:root /etc/snort
 
-# Snort config
-rm -rf /etc/snort
-cp -r /tmp/snort /etc/snort
-chown -R root:root /etc/snort
-# --- Fix chemins dynamiques Snort (Ubuntu Jammy) ---
-sed -i 's|/usr/lib/snort_dynamicpreprocessor|/usr/lib/x86_64-linux-gnu/snort_dynamicpreprocessor|g' /etc/snort/snort.conf
-sed -i 's|/usr/lib/snort_dynamicengine|/usr/lib/x86_64-linux-gnu/snort_dynamicengine|g' /etc/snort/snort.conf
+# --- Corriger chemins dynamiques via symlinks (portable) ---
+# Ton snort.conf attend:
+#   /usr/lib/snort_dynamicpreprocessor/
+#   /usr/lib/snort_dynamicengine/...
+#   /usr/lib/snort_dynamicrules
+# Sur Jammy, libs sont ici:
+#   /usr/lib/snort/snort_dynamicpreprocessor
+#   /usr/lib/snort/snort_dynamicengine
+#   /usr/lib/snort/snort_dynamicrules (souvent vide mais ok)
 
-# Service systemd Snort DMZ
-cp /tmp/snort-dmz.service /etc/systemd/system/snort-dmz.service
-chmod 644 /etc/systemd/system/snort-dmz.service
+sudo ln -snf /usr/lib/snort/snort_dynamicpreprocessor /usr/lib/snort_dynamicpreprocessor
+sudo ln -snf /usr/lib/snort/snort_dynamicengine       /usr/lib/snort_dynamicengine
+sudo ln -snf /usr/lib/snort/snort_dynamicrules        /usr/lib/snort_dynamicrules
 
-systemctl daemon-reload
-systemctl enable snort-dmz
-systemctl start snort-dmz
+# Certains snort.conf utilisent aussi x86_64-linux-gnu
+sudo mkdir -p /usr/lib/x86_64-linux-gnu || true
+sudo ln -snf /usr/lib/snort/snort_dynamicpreprocessor /usr/lib/x86_64-linux-gnu/snort_dynamicpreprocessor
+sudo ln -snf /usr/lib/snort/snort_dynamicengine       /usr/lib/x86_64-linux-gnu/snort_dynamicengine
+sudo ln -snf /usr/lib/snort/snort_dynamicrules        /usr/lib/x86_64-linux-gnu/snort_dynamicrules
 
+# --- Fichiers attendus par snort.conf ---
+sudo mkdir -p /etc/snort
+sudo mkdir -p /var/log/snort
+sudo chown -R snort:snort /var/log/snort || true
+
+# threshold.conf doit exister (snort.conf: include threshold.conf)
+if [ ! -f /etc/snort/threshold.conf ]; then
+  sudo touch /etc/snort/threshold.conf
+  sudo chmod 644 /etc/snort/threshold.conf
+fi
+
+# unicode.map doit exister (http_inspect iis_unicode_map unicode.map)
+# Si absent, on le récupère depuis le paquet snort-common
+if [ ! -f /etc/snort/unicode.map ]; then
+  tmpdir="$(mktemp -d)"
+  (
+    cd "$tmpdir"
+    apt-get download snort-common >/dev/null
+    dpkg-deb -x snort-common_*.deb "$tmpdir/extract"
+    sudo cp "$tmpdir/extract/etc/snort/unicode.map" /etc/snort/unicode.map
+    sudo chmod 644 /etc/snort/unicode.map
+  )
+  rm -rf "$tmpdir"
+fi
+
+# --- Service systemd Snort DMZ ---
+sudo cp /tmp/snort-dmz.service /etc/systemd/system/snort-dmz.service
+sudo chmod 644 /etc/systemd/system/snort-dmz.service
+
+sudo systemctl daemon-reload
+
+# --- Test de config (évite boot “silent fail”) ---
+sudo snort -T -i vlan_dmz -c /etc/snort/snort.conf
+
+sudo systemctl enable --now snort-dmz
 echo "FW OK: snort-dmz service"
-#permet de voir le service snort  en start
-systemctl --no-pager status snort-dmz || true
+sudo systemctl --no-pager status snort-dmz || true
+
+############

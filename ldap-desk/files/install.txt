@@ -1,0 +1,5 @@
+krb5-config krb5-config/admin_server string sso-server.interface3.be
+krb5-config krb5-config/kerberos_servers string sso-server.interface3.be
+krb5-config krb5-config/default_realm string INTERFACE3.BE
+krb5-config krb5-config/add_servers boolean true
+krb5-config krb5-config/read_conf boolean true

@@ -1,0 +1,82 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+
+  # 4 NIC internes (VLANs via intnet) - pas d'autoconfig par Vagrant
+  config.vm.network "private_network", virtualbox__intnet: "staff", auto_config: false
+  config.vm.network "private_network", virtualbox__intnet: "tech",  auto_config: false
+  config.vm.network "private_network", virtualbox__intnet: "desk",  auto_config: false
+  config.vm.network "private_network", virtualbox__intnet: "dmz",   auto_config: false
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.memory = 1024
+    vb.cpus = 1
+
+    # MAC fixes (matches your caméléon mapping)
+    vb.customize ["modifyvm", :id, "--macaddress2", "080048AA0011"] # staff
+    vb.customize ["modifyvm", :id, "--macaddress3", "080048AA0022"] # tech
+    vb.customize ["modifyvm", :id, "--macaddress4", "080048AA0033"] # desk
+    vb.customize ["modifyvm", :id, "--macaddress5", "080048AA0044"] # dmz
+  end
+
+  # Provision: outils + script vlan-switch (manuel)
+  config.vm.provision "shell", inline: <<-'SHELL'
+    set -euo pipefail
+
+    apt-get update
+    apt-get install -y nmap curl net-tools iproute2 dnsutils tcpdump
+
+    cat >/usr/local/bin/vlan-switch <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+VLAN="${1:-}"
+if [[ -z "$VLAN" ]]; then
+  echo "Usage: vlan-switch {staff|tech|desk|dmz}"
+  exit 1
+fi
+
+case "$VLAN" in
+  staff) MAC="08:00:48:aa:00:11"; IP="172.28.5.25/24";   GW="172.28.5.254"   ;;
+  tech)  MAC="08:00:48:aa:00:22"; IP="172.28.10.25/24";  GW="172.28.10.254"  ;;
+  desk)  MAC="08:00:48:aa:00:33"; IP="172.28.100.25/24"; GW="172.28.100.254" ;;
+  dmz)   MAC="08:00:48:aa:00:44"; IP="172.28.200.25/24"; GW="172.28.200.254" ;;
+  *) echo "Unknown VLAN: $VLAN"; exit 1 ;;
+esac
+
+# Trouver l'interface par MAC
+IFACE=$(ip -br link | awk -v mac="$MAC" 'tolower($3)==tolower(mac){print $1; exit}')
+if [[ -z "${IFACE:-}" ]]; then
+  echo "No interface found for MAC $MAC"
+  exit 1
+fi
+
+# IMPORTANT: ne pas toucher à la NIC NAT (ssh). Sur Ubuntu c'est en général enp0s3.
+NAT_IF="enp0s3"
+
+# Flush + down uniquement les NIC non-NAT (intnet)
+for i in $(ip -br link | awk '$1!="lo"{print $1}'); do
+  [[ "$i" == "$NAT_IF" ]] && continue
+  ip addr flush dev "$i" 2>/dev/null || true
+  ip link set "$i" down 2>/dev/null || true
+done
+
+ip link set "$IFACE" up
+ip addr add "$IP" dev "$IFACE"
+ip route replace default via "$GW" dev "$IFACE"
+
+echo "OK: $VLAN via $IFACE ($MAC) $IP gw $GW"
+EOF
+
+    chmod +x /usr/local/bin/vlan-switch
+
+    cat >/etc/motd <<'EOF'
+Attacker VM (Ubuntu headless)
+- Switch VLAN: sudo vlan-switch {staff|tech|desk|dmz}
+- Check: ip a ; ip r
+EOF
+  SHELL
+end

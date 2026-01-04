@@ -5,10 +5,18 @@ Vagrant.configure("2") do |config|
   config.vm.boot_timeout = 600
 #  config.vm.hostname = "ldap-server"
   # MGMT network (host-only)
-  config.vm.network "private_network", ip: "172.28.128.110", auto_config: true
+  config.vm.network "private_network", ip: "172.28.128.110", auto_config: false
 
   # Interface Servers
-  config.vm.network "private_network", ip: "172.28.2.10", virtualbox__intnet: "servers"
+  config.vm.network "private_network", ip: "172.28.2.10", virtualbox__intnet: "servers", auto_config: false
+
+config.vm.provider "virtualbox" do |vb|
+    # MAC fixes pour matcher netplan (adapters 2..9)
+    vb.customize ["modifyvm", :id, "--macaddress2", "080027FB0011"]
+    vb.customize ["modifyvm", :id, "--macaddress3", "080027FB0022"]
+  end
+
+
 
   # External config files (prof-style)
   config.vm.provision "file", source: "./files/01-netplan.yaml", destination: "/tmp/01-netplan.yaml"

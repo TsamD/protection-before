@@ -3,15 +3,14 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
   config.ssh.insert_key = false
   config.vm.boot_timeout = 600
-#  config.vm.hostname = "ldap-service"
+#  config.vm.hostname = "ldap-staff"
 
-  config.vm.network "private_network", ip: "172.28.128.119", auto_config: false
-  config.vm.network "private_network", ip: "172.28.2.11", virtualbox__intnet: "servers", auto_config: false
+  # VLAN
+  config.vm.network "private_network", ip: "172.28.5.10", virtualbox__intnet: "staff", auto_config: false
  config.vm.provider "virtualbox" do |vb| 
-  vb.customize ["modifyvm", :id, "--macaddress2", "080027BC1110"]
-  vb.customize ["modifyvm", :id, "--macaddress3", "080054AC1111"]
+    # MAC fixes pour matcher netplan (adapters 2..9)
+  vb.customize ["modifyvm", :id, "--macaddress2", "080099AC1111"]
  end
-
 
   config.vm.provision "file", source: "./files/01-netplan.yaml", destination: "/tmp/01-netplan.yaml"
   config.vm.provision "file", source: "./files/install.txt", destination: "/home/vagrant/install.txt"

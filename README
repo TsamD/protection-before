@@ -1,0 +1,22 @@
+ATTACKER VM (Ubuntu headless)
+
+Start:
+  cd attacker
+  vagrant up
+  vagrant ssh
+
+Switch VLAN:
+  sudo vlan-switch tech
+  sudo vlan-switch dmz
+  sudo vlan-switch staff
+  sudo vlan-switch desk
+
+Useful tests:
+  ip a
+  ip r
+  ping -c 2 172.28.200.254
+  nmap -sn 172.28.200.0/24
+  nmap -sS -Pn -p 80,443 172.28.200.10
+
+Snort check on firewall:
+  sudo tail -f /var/log/snort/alert

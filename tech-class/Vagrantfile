@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
   # VLAN TECH uniquement
   config.vm.network "private_network", ip: "172.28.10.10", virtualbox__intnet: "tech", auto_config: false
   config.vm.provider "virtualbox" do |vb| 
-  vb.customize ["modifyvm", :id, "--macaddress2", "080027BB0010"] 
+  vb.customize ["modifyvm", :id, "--macaddress2", "080027BB0011"] 
   end
 
 

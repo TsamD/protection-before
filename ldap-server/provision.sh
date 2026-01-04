@@ -72,10 +72,10 @@ EOF
 systemctl restart sshd
 
 # LDAP content
-ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/00-base.ldif || true
-ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/10-groups.ldif || true
-ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/20-users.ldif || true
-ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/30-memberships.ldif || true
+ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/00-base.ldif
+ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/10-groups.ldif
+ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/20-users.ldif
+ldapadd -x -D "cn=admin,dc=interface3,dc=be" -y /home/vagrant/secrets/ldap-admin-pass.txt -f /home/vagrant/ldifs/30-memberships.ldif
 
 # Kerberos principals for LDAP users (all: Ephec.com)
 DEFAULT_PASS="$(tr -d '\n' < "$DEFAULTPASSFILE")"

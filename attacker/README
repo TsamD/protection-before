@@ -1,0 +1,38 @@
+Principe de la machine Attacker Caméléon
+
+La machine attacker est volontairement conçue comme un attaquant caméléon.
+Elle ne se connecte qu’à un seul VLAN à la fois, afin de simuler un attaquant qui se déplace physiquement entre différents bureaux ou salles de classe
+ non surveillés et se branche sur le réseau disponible.
+
+Le changement de VLAN est effectué manuellement (activation/désactivation des interfaces), ce qui permet :
+
+de reproduire un comportement réaliste d’attaquant,
+
+d’éviter toute connexion simultanée à plusieurs segments,
+
+et de tester précisément les règles de filtrage, de routage et de détection (Snort) pour chaque zone réseau.
+
+Cette approche privilégie la réalité du scénario d’attaque plutôt que l’automatisation,
+ et garantit une meilleure lisibilité des flux réseau observés sur le firewall.
+
+
+
+Correspondance MAC / VLAN / Adressage
+Adresse MAC complète	VLAN	    Réseau	IP attacker	Passerelle
+08:00:48:aa:00:11	staff	172.28.5.0/24	172.28.5.25	172.28.5.254
+08:00:48:aa:00:22	tech	172.28.10.0/24	172.28.10.25	172.28.10.254
+08:00:48:aa:00:33	desk	172.28.100.0/24	172.28.100.25	172.28.100.254
+08:00:48:aa:00:44	dmz	172.28.200.0/24	172.28.200.25	172.28.200.254
+
+
+sur l'attaquant on Identifie l’interface associée à la  MAC avec la commande ip -br link
+
+Pour activer le VLAN souhaité (ex mac 08:00:48:aa:00:22 a pour  interface enp0s9 , on prend son ip voir tableau des correspondances )
+sudo ip link set enp0s9 up
+sudo ip addr add 172.28.10.25/24 dev enp0s9
+sudo ip route replace default via 172.28.10.254 dev enp0s9
+
+pour Désactiver le VLAN 
+sudo ip addr flush dev enp0s9
+sudo ip link set enp0s9 down
+

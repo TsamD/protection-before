@@ -3,9 +3,13 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "web-dmz"
 
   # Interface DMZ
-  config.vm.network "private_network",
-    ip: "172.28.200.10",
-    virtualbox__intnet: "dmz"
+  config.vm.network "private_network", ip: "172.28.200.10", virtualbox__intnet: "dmz", auto_config: false
+  config.vm.provider "virtualbox" do |vb|
+  vb.customize ["modifyvm", :id, "--macaddress2", "080027BD1110"]
+  end
+
+
+  config.vm.provision "file",  source: "./files/01-netplan.yaml", destination: "/tmp/01-netplan.yaml"
 
   # WWW externe
   config.vm.synced_folder "./www", "/var/www/yuki", owner: "www-data", group: "www-data"
