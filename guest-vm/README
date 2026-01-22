@@ -1,0 +1,4 @@
+Machine qui simule un laptop de staff externe (par exemple) connectée sur le wifi-guest (qui est inclu dans le vlan dmz)
+
+Dependance 
+FW

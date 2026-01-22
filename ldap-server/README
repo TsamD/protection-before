@@ -1,7 +1,16 @@
+LDA server , serveur de gestion d'identités utilisateurs
 
-# README – Réparation manuelle LDAP / Kerberos (ldap-server)
 
-> Ce README permet de **réparer un serveur LDAP + Kerberos déjà installé** lorsque le provisionnement Vagrant échoue partiellement (erreurs `Invalid credentials (49)` / `kadmin interface`).
+Dependances
+
+pas de dependances saus fw pour mise à jour du système
+
+
+
+
+# SECTION - Réparation manuelle LDAP / Kerberos (ldap-server)
+
+> Cette section permet de **réparer un serveur LDAP + Kerberos déjà installé** lorsque le provisionnement Vagrant échoue partiellement (erreurs `Invalid credentials (49)` / `kadmin interface`).
 
 
 ## 1. Connexion

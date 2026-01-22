@@ -1,120 +1,123 @@
-Parfait — voici un **README clair, court et propre**, centré **uniquement** sur le dossier `/finance` et ses droits.
-Prêt à être copié tel quel.
+LDAP — COMPTA :
 
-# README — COMPTA : dossier partagé `/finance`
+Dependance
 
-## Objectif
+Fw
+ldap-server (pour users ldap)
+backup-server (pour backup dossier finance
 
-Mettre en place un dossier `/finance` sur la machine **sso-compta.interface3.be** destiné aux données comptables.
-L’écriture est autorisée uniquement aux **admins** et aux membres du groupe LDAP **`grp_compta`**
-(`saliha.compta`, `olivier.compta`).
+
+BACKUP
+
+dossier partagé finance
+
+Objectif
+
+Mettre en place un dossier /finance sur la machine sso-compta.interface3.be destiné aux données comptables.
+L’écriture est autorisée uniquement aux admins et aux membres du groupe LDAP grp_compta
+(saliha.compta, olivier.compta).
 Les autres utilisateurs n’ont aucun accès.
 
 ---
 
-## Contexte
+Contexte
 
-* Les utilisateurs sont gérés via **LDAP**
-* Le groupe **`grp_compta`** existe dans l’annuaire LDAP
-* Aucun groupe local supplémentaire n’est créé
-* Les permissions sont gérées via les droits Unix classiques
+- Les utilisateurs sont gérés via **LDAP**
+- Le groupe **`grp_compta`** existe dans l’annuaire LDAP
+- Aucun groupe local supplémentaire n’est créé
+- Les permissions sont gérées via les droits Unix classiques
 
 ---
 
-## 1) Création du dossier
+1) Création du dossier
 
-```bash
+
 sudo mkdir -p /finance
-```
 
 ---
 
-## 2) Attribution du groupe et des permissions
+2) Attribution du groupe et des permissions
 
 Associer le dossier au groupe LDAP `grp_compta` et activer l’héritage de groupe (setgid) :
 
-```bash
+
 sudo chown root:grp_compta /finance
 sudo chmod 2770 /finance
-```
 
-* `2770` :
 
-  * lecture / écriture / exécution pour root et grp_compta
-  * aucun droit pour les autres
-  * héritage automatique du groupe pour les fichiers créés
+2770 :
+
+- lecture / écriture / exécution pour root et grp_compta
+- aucun droit pour les autres
+- héritage automatique du groupe pour les fichiers créés
 
 ---
 
-## 3) Correction récursive des sous-répertoires existants
+3) Correction récursive des sous-répertoires existants
 
 Si des sous-dossiers existent déjà, aligner les droits récursivement :
 
-```bash
+
 sudo chown -R :grp_compta /finance
 sudo find /finance -type d -exec chmod 2770 {} \;
 sudo find /finance -type f -exec chmod 660 {} \;
-```
 
 ---
 
-## 4) Vérification
+4) Vérification
 
-```bash
+
 ls -ld /finance
 ls -ld /finance/*
-```
+
 
 Résultat attendu (exemple) :
 
-```
+
 drwxrws--- root grp_compta /finance
-```
 
 ---
 
-## 5) Tests fonctionnels
+5) Tests fonctionnels
 
-### Test avec un utilisateur autorisé
+Test avec un utilisateur autorisé
 
-```bash
 su - saliha.compta
 touch /finance/test-ok
 exit
-```
 
-### Test avec un utilisateur non autorisé
 
-```bash
+Test avec un utilisateur non autorisé
+
+
 su - <user_non_compta>
 touch /finance/test-ko
-```
 
-Résultat attendu : `Permission denied`.
+
+Résultat attendu : Permission denied.
 
 ---
 
-## Conclusion
+Conclusion
 
-Le dossier `/finance` est sécurisé par le groupe LDAP `grp_compta`.
+Le dossier /finance est sécurisé par le groupe LDAP grp_compta.
 Les droits sont cohérents sur l’ensemble de l’arborescence et garantissent que seules les personnes autorisées peuvent modifier les données comptables.
 
 
-### Configuration sudo liée à la sauvegarde
+Configuration sudo liée à la sauvegarde
 
-Dans le cadre de la sauvegarde, une règle sudo **spécifique et restrictive** est définie sur la machine COMPTA.
+Dans le cadre de la sauvegarde, une règle sudo spécifique et restrictive est définie sur la machine COMPTA.
 
-Cette règle autorise uniquement l’utilisateur LDAP `admin` à exécuter la commande `rsync` avec des privilèges élevés, **sans accès shell root** et **sans mot de passe**.
+Cette règle autorise uniquement l’utilisateur LDAP admin à exécuter la commande rsync avec des privilèges élevés, sans accès shell root et sans mot de passe.
 
-```text
+
 admin ALL=(root) NOPASSWD: /usr/bin/rsync
-```
+
 
 Cette configuration est isolée dans le fichier :
 
-```
 /etc/sudoers.d/backup-rsync
-```
+
 
 Aucune autre commande n’est autorisée via sudo dans ce contexte.
-Cette approche permet d’assurer la sauvegarde des données sans modifier les permissions du dossier `/finance` ni exposer un accès administrateur général.
+Cette approche permet d’assurer la sauvegarde des données sans modifier les permissions du dossier /finance ni exposer un accès administrateur général.

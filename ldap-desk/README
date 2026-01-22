@@ -1,3 +1,14 @@
+LDAP-DESK 
+
+Dependances 
+
+FW
+ldap-server (users ldap)
+logging-server (monitoring )
+
+
+COMMANDES
+
 pour tester ldap
 
 getent passwd johan
@@ -33,9 +44,10 @@ Sur logging-server :
 sudo tail -n 50 /var/log/syslog
 
 
+----INFORMATIONS-------------------------------
 
+Audit utilisateurs sur sso-desk
 
-README — Audit utilisateurs sur sso-desk
 Objectif
 Mettre en place une surveillance ciblée des actions utilisateurs LDAP sur la machine sso-desk.interface3.be, et centraliser les événements d’audit vers le serveur de logs.
 L’audit porte sur des ressources personnelles représentatives, sans générer de bruit système.

@@ -1,0 +1,5 @@
+LDAP-service est une vm qui sert de test ldap sans les contraintes vlans
+
+dependances 
+
+ldap server 
