@@ -1,0 +1,118 @@
+console monitoring 
+
+Dependances
+
+FW
+ldap-desk (source monitorée)
+
+
+commandes pour verif (copie ldap-desk-README)
+
+
+README — Activation Audit & Centralisation sur sso-desk
+Objectif
+Mettre en place sur la machine sso-desk.interface3.be :
+	•	un audit ciblé des actions utilisateurs LDAP
+	•	une centralisation des événements d’audit vers un serveur de logs
+Aucune modification n’est apportée à LDAP, Kerberos ou SSSD.
+
+1. Installation et activation d’auditd
+sudo apt-get update
+sudo apt-get install -y auditd
+sudo systemctl enable --now auditd
+Vérification :
+systemctl status auditd --no-pager
+
+2. Création d’une ressource auditée (exemple)
+Connexion avec un utilisateur LDAP :
+su - stephanie.deskclass
+echo "Données personnelles de stephanie" > ~/personnel.txt
+exit
+Ce fichier représente une donnée personnelle sensible.
+
+3. Déclaration de la règle d’audit (persistante)
+sudo tee /etc/audit/rules.d/personnel.rules >/dev/null <<'EOF'
+-w /home/stephanie.deskclass/personnel.txt -p rwxa -k personnel-stephanie.deskclass
+EOF
+Chargement des règles :
+sudo augenrules --load
+sudo systemctl restart auditd
+Vérification :
+sudo auditctl -l
+
+4. Test local de l’audit
+su - stephanie.deskclass
+echo "TEST AUDIT" >> ~/personnel.txt
+exit
+Lecture des événements :
+sudo ausearch -k personnel-stephanie.deskclass -i
+
+5. Centralisation des logs auditd
+Configuration rsyslog pour envoyer audit.log :
+sudo tee /etc/rsyslog.d/30-audit-forward.conf >/dev/null <<'EOF'
+module(load="imfile")
+
+input(type="imfile"
+      File="/var/log/audit/audit.log"
+      Tag="auditd:"
+      Severity="info"
+      Facility="local6")
+
+local6.* @@sso-logging-server.interface3.be:514
+EOF
+Redémarrage :
+sudo systemctl restart rsyslog
+
+6. Vérification côté serveur de logs
+Sur sso-logging-server :
+sudo grep personnel-stephanie.deskclass /var/log/syslog | tail
+Les événements d’accès au fichier personnel doivent apparaître.
+
+Conclusion
+	•	L’audit est actif uniquement sur DESK
+	•	Les accès utilisateurs sont tracés au niveau du noyau
+	•	Les journaux sont centralisés sans impacter les autres machines
+	•	La solution est ciblée, lisible et professionnelle
+
+7. DEBUG / Dépannage
+Audit ne remonte rien
+	•	Vérifier que la règle est active :
+
+sudo auditctl -l
+	•	Vérifier l’existence du journal :
+
+ls -l /var/log/audit/audit.log
+	•	Redémarrer auditd :
+
+sudo systemctl restart auditd
+
+ausearch ne retourne rien
+	•	Vérifier la clé utilisée (-k) correspond exactement à la règle
+	•	Générer une nouvelle action (modification du fichier)
+	•	Relancer :
+
+sudo ausearch -k personnel-stephanie.deskclass -i
+
+Les logs ne remontent pas sur le logging-server
+	•	Vérifier rsyslog sur DESK :
+
+systemctl status rsyslog --no-pager
+	•	Tester l’envoi :
+
+logger "TEST AUDIT FORWARD"
+	•	Vérifier l’écoute sur le logging-server :
+
+sudo ss -lntp | grep 514
+
+Beaucoup de logs système (PAM, ssh, sudo)
+Comportement normal. L’exploitation se fait par filtrage sur clé :
+
+sudo ausearch -k personnel-stephanie.deskclass -i
+
+Conclusion
+	•	L’audit est ciblé et maîtrisé
+	•	Les événements sont tracés au niveau du noyau
+	•	La centralisation est fonctionnelle et vérifiable
+	•	L’architecture reste simple et robuste
+
+
