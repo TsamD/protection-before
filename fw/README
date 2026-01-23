@@ -13,3 +13,32 @@ sudo systemctl restart nftables
 
 Pour voir les regles nftables:
 sudo nft  list reuleset
+
+
+SNORT COMMAND
+
+
+systemctl status snort 
+systemctl start snort 
+systemctl stop snort 
+
+
+
+logs directs
+Pour suivre les logs en direct (comme un stream) : 
+
+logs 
+sudo less /var/log/snort/alert 
+ (Appuyez sur q pour quitter). 
+
+Pour rechercher les entrées Snort : 
+sudo grep snort /var/log/syslog 
+# Ou sur les systèmes basés sur systemd : 
+sudo journalctl -u snort -f 
+
+Résumé des emplacements par défaut 
+
+Dossier principal : /var/log/snort/ 
+
+Fichier de configuration : /etc/snort/snort.conf (vérifiez ce fichier pour voir où output est dirigé si les commandes ci-dessus ne fonctionnent pas). 
+ 
