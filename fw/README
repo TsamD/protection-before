@@ -12,4 +12,4 @@ sudo systemctl restart nftables
 
 
 Pour voir les regles nftables:
-sudo nft -j list reuleset
+sudo nft  list reuleset
